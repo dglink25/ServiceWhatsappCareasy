@@ -223,7 +223,7 @@ app.get('/', (req, res) => {
 
     ${isConnected ? `
         <div class="badge ok">Connecté — Prêt à envoyer</div>
-        <div class="sender">📞 Expéditeur : <strong>+2290194119476</strong></div>
+        <div class="sender"> Expéditeur : <strong>CarEasy</strong></div>
     ` : qrDataUrl ? `
         <div class="badge wait">Scannez le QR Code</div>
         <div class="qr-wrap">
@@ -255,7 +255,7 @@ app.get('/status', (req, res) => {
         ready:    isConnected,
         has_qr:   qrDataUrl !== null,
         service:  'WhatsApp Gateway v2 (Baileys)',
-        sender:   '+2290194119476',
+        sender:   '+2290199955078',
     });
 });
 
@@ -406,13 +406,24 @@ function formatDate(dateStr) {
     return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// ─── Démarrage ────────────────────────────────────────────────────────────────
-app.listen(PORT, HOST, () => {
-    console.log('\n========================================');
-    console.log(`WhatsApp Gateway v2 démarré sur :${PORT}`);
-    console.log(`Interface QR : http://localhost:${PORT}`);
-    console.log('========================================\n');
+// ─── Keepalive ────────────────────────────────────────────────────────────────
+function startKeepalive() {
+    setInterval(() => {
+        try {
+            const http = require('http');
+            const req  = http.request(
+                { hostname: 'localhost', port: PORT, path: '/status', method: 'GET' },
+                () => {}
+            );
+            req.on('error', () => {});
+            req.end();
+        } catch(e) {}
+    }, 4 * 10);
+    console.log('Keepalive actif - ping toutes les 4 minutes');
+}
 
-    // Initialiser WhatsApp après démarrage du serveur
+app.listen(PORT, HOST, () => {
+    console.log('WhatsApp Gateway v2 demarré sur :' + PORT);
     setTimeout(() => initWhatsApp(), 1000);
+    startKeepalive();
 });
